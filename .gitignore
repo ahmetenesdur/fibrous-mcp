@@ -1,0 +1,211 @@
+# Dependencies
+node_modules/
+# Uncomment if you want to ignore lock files (not recommended)
+# pnpm-lock.yaml
+# package-lock.json
+# yarn.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Build outputs
+build/
+dist/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Runtime data (legacy - see detailed section below)
+pids
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# IDE files
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.fleet/
+.sublime-*
+*.kate-swp
+.viminfo
+
+# OS generated files (legacy - see detailed sections below)
+.Spotlight-V100
+.Trashes
+
+# Logs
+logs
+*.log
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# TypeScript cache (see detailed section below)
+# *.tsbuildinfo
+
+# Optional eslint cache (legacy - see detailed section below)
+# .eslintcache
+
+# Jest coverage (legacy - see detailed section below)
+# coverage/
+
+# Temporary folders
+tmp/
+temp/
+
+# MCP Server specific
+*.mcp-config.json
+.mcp/
+mcp-debug.log
+server-instances/
+
+# Security & sensitive files
+*.key
+*.pem
+*.cert
+*.crt
+*.p12
+*.pfx
+*.secrets
+secrets.json
+.env.secrets
+auth-tokens/
+
+# Testing
+.nyc_output/
+*.lcov
+test-results/
+reports/
+playwright-report/
+test-results.xml
+
+# MacOS specific
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows specific
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux specific
+*~
+.nfs*
+
+# Runtime & Process files
+*.pid
+*.seed
+*.pid.lock
+.grunt
+
+# Dependency directories
+jspm_packages/
+bower_components/
+web_modules/
+
+# Optional dependencies
+.pnp.*
+.pnp/
+
+# ESLint cache
+.eslintcache
+
+# Prettier cache
+.prettier-cache
+
+# Stylelint cache
+.stylelintcache
+
+# Parcel cache
+.parcel-cache/
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+.output/
+
+# Gatsby
+.cache/
+public/
+
+# Storybook
+.storybook-build/
+storybook-static/
+
+# Rush
+common/deploy/
+common/temp/
+common/autoinstallers/*/.npmrc
+.rush/
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# TypeScript incremental compilation
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# SvelteKit
+.svelte-kit
+
+# Local History for Visual Studio Code
+.history/
+
+# Temporary files
+*.tmp
+*.temp
