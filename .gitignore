@@ -29,6 +29,9 @@ pids
 coverage/
 *.lcov
 
+# Jest
+.nyc_output
+
 # IDE files
 .vscode/
 !.vscode/settings.json

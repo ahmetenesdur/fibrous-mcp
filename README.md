@@ -5,28 +5,28 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Fibrous SDK](https://img.shields.io/badge/Fibrous%20SDK-v0.5.1-purple.svg)](https://docs.fibrous.finance/)
 
-> Model Context Protocol server integrating Fibrous Finance DeFi aggregation for cross-chain token swaps.
+> Model Context Protocol server integrating Fibrous Finance DeFi aggregation.
 
 ## Overview
 
-Fibrous MCP Server provides access to Fibrous Finance's DeFi aggregation technology through the Model Context Protocol. Enables optimal token swaps across Base, Starknet, and Scroll networks.
+Fibrous MCP Server provides access to Fibrous Finance's DeFi aggregation technology through the **Model Context Protocol (MCP)**. Enables optimal token swaps across Base, Starknet, and Scroll networks.
 
 ## Features
 
-### Tools
+### 🛠️ MCP Tools (6 Available)
 
-- `get-supported-tokens` - Retrieve available tokens for a chain
-- `get-supported-protocols` - List available DEX protocols
-- `get-best-route` - Find optimal swap routes
-- `build-transaction` - Generate transaction data
-- `format-token-amount` - Convert between raw/readable amounts
-- `get-token` - Get token information by address
+- **`get-supported-tokens`** - Retrieve available tokens for any supported chain
+- **`get-supported-protocols`** - List all available DEX protocols
+- **`get-best-route`** - Find optimal swap routes
+- **`build-transaction`** - Generate transaction data
+- **`format-token-amount`** - Convert between wei and readable amounts
+- **`get-token`** - Get token information by address
 
-### Supported Networks
+### 🌐 Supported Networks
 
-- **Base** - Ethereum L2 with low fees
-- **Starknet** - ZK-rollup with Cairo VM
-- **Scroll** - ZK-rollup with EVM compatibility
+- **Base** - Uniswap V3, Aerodrome, SwapBased
+- **Starknet** - JediSwap, MySwap, 10kSwap, Ekubo
+- **Scroll** - Uniswap V3, SyncSwap, iZiSwap
 
 ## Installation
 
@@ -47,16 +47,16 @@ pnpm start
 # Development mode
 pnpm dev
 
-# Linting and formatting
-pnpm format:lint
-
 # Run tests
 pnpm test
+
+# Linting and formatting
+pnpm format:lint
 ```
 
 ## MCP Client Configuration
 
-Configure your MCP client (Claude Desktop, Cursor, etc.):
+### Claude Desktop
 
 ```json
 {
@@ -68,6 +68,10 @@ Configure your MCP client (Claude Desktop, Cursor, etc.):
 	}
 }
 ```
+
+### Other MCP Clients
+
+Compatible with any MCP client supporting stdio transport and MCP protocol version 2025-03-26.
 
 ## Usage Examples
 
@@ -110,34 +114,22 @@ Configure your MCP client (Claude Desktop, Cursor, etc.):
 }
 ```
 
-## Resources
-
-- `fibrous://config` - Server configuration
-- `chain://{chainName}/info` - Chain information
-- `greeting://{name}` - Personalized greeting
-- `user://{userId}/info` - User session info
-
-## AI Prompts
-
-- `analyze-swap` - Comprehensive swap analysis
-- `defi-strategy` - Portfolio optimization
-- `review-code` - Code security review
-- `help` - Usage documentation
-
 ## API Reference
 
-- **Base URL**: `https://api.fibrous.finance`
+- **Fibrous API**: `https://api.fibrous.finance`
 - **Graph API**: `https://graph.fibrous.finance`
 - **Rate Limit**: 200 requests/minute
-- **Supported Chains**: base, starknet, scroll
+- **Supported Chains**: `base`, `starknet`, `scroll`
 
 ## Contributing
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/name`)
-3. Commit changes (`git commit -m 'Add feature'`)
-4. Push to branch (`git push origin feature/name`)
-5. Open Pull Request
+3. Make your changes with tests
+4. Run tests (`pnpm test`)
+5. Commit changes (`git commit -m 'Add feature'`)
+6. Push to branch (`git push origin feature/name`)
+7. Open Pull Request
 
 ## License
 
@@ -151,7 +143,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ---
 
-## **Disclaimer**: This software is for educational purposes. DeFi operations involve financial risk. Always verify transactions and understand the risks.
+⚠️ **Disclaimer**: This software is for educational purposes. DeFi operations involve financial risk. Always verify transactions and understand the risks.
 
 ---
 
