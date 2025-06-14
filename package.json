@@ -17,7 +17,9 @@
 	},
 	"author": "Fibrous Team",
 	"dependencies": {
+		"@ethersproject/bignumber": "^5.8.0",
 		"@modelcontextprotocol/sdk": "^1.12.1",
+		"fibrous-router-sdk": "^0.5.1",
 		"zod": "^3.25.60"
 	},
 	"devDependencies": {

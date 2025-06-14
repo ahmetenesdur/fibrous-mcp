@@ -1,280 +1,164 @@
-# 🚀 Fibrous MCP Server
+# Fibrous MCP Server
 
-**Model Context Protocol (MCP) Server** - A comprehensive TypeScript implementation of an MCP server with tools, resources, and prompts.
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Fibrous SDK](https://img.shields.io/badge/Fibrous%20SDK-v0.5.1-purple.svg)](https://docs.fibrous.finance/)
 
-## 📋 Features
+> Model Context Protocol server integrating Fibrous Finance DeFi aggregation for cross-chain token swaps.
 
-This MCP server provides the following capabilities:
+## Overview
 
-### 🛠️ Tools
+Fibrous MCP Server provides access to Fibrous Finance's DeFi aggregation technology through the Model Context Protocol. Enables optimal token swaps across Base, Starknet, and Scroll networks.
 
-- **add**: Adds two numbers together
-- **multiply**: Multiplies two numbers
-- **calculate**: Evaluates mathematical expressions safely
-- **get-time**: Returns the current time in English format
+## Features
 
-### 📂 Resources
+### Tools
 
-- **config://fibrous**: Server configuration information
-- **greeting://{name}**: Personalized greeting messages
-- **user://{userId}/info**: User information and access details
+- `get-supported-tokens` - Retrieve available tokens for a chain
+- `get-supported-protocols` - List available DEX protocols
+- `get-best-route` - Find optimal swap routes
+- `build-transaction` - Generate transaction data
+- `format-token-amount` - Convert between raw/readable amounts
+- `get-token` - Get token information by address
 
-### 💬 Prompts
+### Supported Networks
 
-- **review-code**: Code review and analysis prompts
-- **solve-math**: Math problem solving prompts
-- **help**: General help and usage guide
+- **Base** - Ethereum L2 with low fees
+- **Starknet** - ZK-rollup with Cairo VM
+- **Scroll** - ZK-rollup with EVM compatibility
 
-## 🛠️ Installation
-
-### Prerequisites
-
-- Node.js ≥ 18.0.0
-- pnpm package manager
-
-### Steps
-
-1. **Navigate to project directory:**
-
-    ```bash
-    cd fibrous-mcp
-    ```
-
-2. **Install dependencies:**
-
-    ```bash
-    pnpm install
-    ```
-
-3. **Build the project:**
-    ```bash
-    pnpm build
-    ```
-
-## 🚀 Usage
-
-### Development Mode
+## Installation
 
 ```bash
-pnpm dev
-```
+# Install dependencies
+pnpm install
 
-### Production Mode
+# Build project
+pnpm build
 
-```bash
+# Start server
 pnpm start
 ```
 
-### MCP Client Connection
+## Development
 
-You can use your MCP server with any MCP client (Claude Desktop, etc.):
+```bash
+# Development mode
+pnpm dev
+
+# Linting and formatting
+pnpm format:lint
+
+# Run tests
+pnpm test
+```
+
+## MCP Client Configuration
+
+Configure your MCP client (Claude Desktop, Cursor, etc.):
 
 ```json
 {
 	"mcpServers": {
 		"fibrous-mcp": {
 			"command": "node",
-			"args": ["build/index.js"],
-			"cwd": "/path/to/fibrous-mcp"
+			"args": ["/path/to/fibrous-mcp/build/index.js"]
 		}
 	}
 }
 ```
 
-## 📡 API Usage
+## Usage Examples
 
-### Tool Examples
-
-**Addition:**
+### Get Supported Tokens
 
 ```json
 {
-	"name": "add",
+	"name": "get-supported-tokens",
+	"arguments": { "chainName": "base" }
+}
+```
+
+### Find Best Route
+
+```json
+{
+	"name": "get-best-route",
 	"arguments": {
-		"a": 5,
-		"b": 3
+		"amount": "1000000000000000000",
+		"tokenInAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+		"tokenOutAddress": "0x4200000000000000000000000000000000000006",
+		"chainName": "base"
 	}
 }
 ```
 
-**Calculation:**
+### Build Transaction
 
 ```json
 {
-	"name": "calculate",
+	"name": "build-transaction",
 	"arguments": {
-		"expression": "2 + 3 * 4"
+		"amount": "1000000000000000000",
+		"tokenInAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+		"tokenOutAddress": "0x4200000000000000000000000000000000000006",
+		"slippage": 1,
+		"receiverAddress": "0xYourWalletAddress",
+		"chainName": "base"
 	}
 }
 ```
 
-**Time:**
+## Resources
 
-```json
-{
-	"name": "get-time",
-	"arguments": {}
-}
-```
+- `fibrous://config` - Server configuration
+- `chain://{chainName}/info` - Chain information
+- `greeting://{name}` - Personalized greeting
+- `user://{userId}/info` - User session info
 
-### Resource Examples
+## AI Prompts
 
-**Configuration:**
+- `analyze-swap` - Comprehensive swap analysis
+- `defi-strategy` - Portfolio optimization
+- `review-code` - Code security review
+- `help` - Usage documentation
 
-```
-config://fibrous
-```
+## API Reference
 
-**Greeting:**
+- **Base URL**: `https://api.fibrous.finance`
+- **Graph API**: `https://graph.fibrous.finance`
+- **Rate Limit**: 200 requests/minute
+- **Supported Chains**: base, starknet, scroll
 
-```
-greeting://John
-```
-
-**User Information:**
-
-```
-user://123/info
-```
-
-### Prompt Examples
-
-**Code Review:**
-
-```json
-{
-	"name": "review-code",
-	"arguments": {
-		"code": "function hello() { console.log('Hello'); }",
-		"language": "javascript"
-	}
-}
-```
-
-**Math Problem:**
-
-```json
-{
-	"name": "solve-math",
-	"arguments": {
-		"problem": "Solve the equation x^2 + 5x + 6 = 0"
-	}
-}
-```
-
-## 🏗️ Project Structure
-
-```
-fibrous-mcp/
-├── src/
-│   └── index.ts          # Main MCP server code
-├── build/                # Compiled JavaScript files
-├── package.json          # Project dependencies
-├── tsconfig.json         # TypeScript configuration
-├── eslint.config.js      # ESLint v9 flat config
-├── .prettierrc.json      # Prettier formatting settings
-├── .prettierignore       # Prettier ignore rules
-└── README.md             # This file
-```
-
-## 🔧 Development
-
-### Adding New Tools
-
-```typescript
-server.tool(
-	"new-tool",
-	{
-		parameter: z.string().describe("Parameter description"),
-	},
-	async ({ parameter }) => ({
-		content: [
-			{
-				type: "text",
-				text: `Result: ${parameter}`,
-			},
-		],
-	})
-);
-```
-
-### Adding New Resources
-
-```typescript
-server.resource(
-	"resource-name",
-	new ResourceTemplate("resource://{param}", { list: undefined }),
-	async (uri, { param }) => ({
-		contents: [
-			{
-				uri: uri.href,
-				text: `Resource content for ${param}`,
-			},
-		],
-	})
-);
-```
-
-### Adding New Prompts
-
-```typescript
-server.prompt(
-	"prompt-name",
-	{
-		input: z.string().describe("Input description"),
-	},
-	({ input }) => ({
-		messages: [
-			{
-				role: "user",
-				content: {
-					type: "text",
-					text: `Process this input: ${input}`,
-				},
-			},
-		],
-	})
-);
-```
-
-## 🧪 Testing
-
-```bash
-pnpm test
-```
-
-## 📝 Code Quality
-
-### Linting
-
-```bash
-pnpm lint
-pnpm lint:fix
-```
-
-### Formatting
-
-```bash
-pnpm format
-pnpm format:check
-```
-
-### Combined
-
-```bash
-pnpm format:lint
-```
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/name`)
+3. Commit changes (`git commit -m 'Add feature'`)
+4. Push to branch (`git push origin feature/name`)
+5. Open Pull Request
 
-## 🙏 Acknowledgments
+## License
 
-- [Model Context Protocol](https://modelcontextprotocol.io/) by Anthropic
-- [TypeScript](https://www.typescriptlang.org/) for type safety
-- [Zod](https://github.com/colinhacks/zod) for schema validation
+MIT License - see [LICENSE](./LICENSE) file for details.
+
+## Links
+
+- [Fibrous Finance](https://fibrous.finance/)
+- [Documentation](https://docs.fibrous.finance/)
+- [MCP Protocol](https://modelcontextprotocol.io/)
+
+---
+
+## **Disclaimer**: This software is for educational purposes. DeFi operations involve financial risk. Always verify transactions and understand the risks.
+
+---
+
+<div align="center">
+
+**Built with ❤️ by the Fibrous Team**
+
+[Website](https://fibrous.finance/) • [Documentation](https://docs.fibrous.finance/) • [Discord](https://discord.gg/fibrous) • [X](https://x.com/fibrousfinance)
+
+</div>
