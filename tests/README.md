@@ -4,9 +4,9 @@ Comprehensive test suite for the Fibrous MCP Server, covering API endpoints, SDK
 
 ## Test Results
 
-✅ **All Tests Passing**: 90/90 tests successful  
-🚀 **Test Suites**: 4 passed, 4 total  
-⚡ **Execution Time**: ~3 seconds  
+✅ **All Tests Passing**: 98/98 tests successful  
+🚀 **Test Suites**: 6 passed, 6 total  
+⚡ **Execution Time**: ~11 seconds  
 📊 **Mock Coverage**: 100% external API and SDK coverage
 
 ## Test Structure
@@ -134,7 +134,7 @@ describe("Tool Functionality", () => {
 ## Coverage Strategy
 
 ### Current Status
-- **Tests**: 100% passing (74/74)
+- **Tests**: 100% passing (98/98)
 - **Source Coverage**: 0% (expected for MCP server)
 - **Mock Coverage**: 100% external API coverage
 - **Integration**: Full MCP protocol compliance testing
@@ -198,7 +198,7 @@ pnpm test --silent=false
 Tests are optimized for CI environments:
 - **No External Dependencies**: All APIs mocked
 - **Deterministic Results**: Consistent test outcomes
-- **Fast Execution**: Complete suite runs in ~1.1 seconds
+- **Fast Execution**: Complete suite runs in ~11 seconds
 - **Clear Reporting**: Detailed failure information
 - **Parallel Execution**: Tests run concurrently when possible
 

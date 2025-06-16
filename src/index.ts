@@ -10,11 +10,13 @@ import { server, SERVER_CONFIG } from "./server.js";
 // SERVER STARTUP
 // =============================================================================
 
+let transport: StdioServerTransport | null = null;
+
 async function startServer(): Promise<void> {
 	try {
 		console.log(`Starting ${SERVER_CONFIG.name} v${SERVER_CONFIG.version}...`);
 		console.log("📡 Initializing transport...");
-		const transport = new StdioServerTransport();
+		transport = new StdioServerTransport();
 
 		console.log("🔗 Connecting server...");
 		await server.connect(transport);
@@ -29,19 +31,40 @@ async function startServer(): Promise<void> {
 }
 
 function setupGracefulShutdown(): void {
-	const shutdown = (signal: string) => {
+	const shutdown = async (signal: string) => {
 		console.log(`\nReceived ${signal}, shutting down...`);
+		try {
+			if (transport) {
+				await transport.close();
+			}
+		} catch (error) {
+			console.error("Error during cleanup:", error);
+		}
 		process.exit(0);
 	};
 
 	process.on("SIGINT", () => shutdown("SIGINT"));
 	process.on("SIGTERM", () => shutdown("SIGTERM"));
-	process.on("uncaughtException", (error) => {
+	process.on("uncaughtException", async (error) => {
 		console.error("Uncaught Exception:", error);
+		try {
+			if (transport) {
+				await transport.close();
+			}
+		} catch (cleanupError) {
+			console.error("Error during cleanup:", cleanupError);
+		}
 		process.exit(1);
 	});
-	process.on("unhandledRejection", (reason) => {
+	process.on("unhandledRejection", async (reason) => {
 		console.error("Unhandled Rejection:", reason);
+		try {
+			if (transport) {
+				await transport.close();
+			}
+		} catch (cleanupError) {
+			console.error("Error during cleanup:", cleanupError);
+		}
 		process.exit(1);
 	});
 }

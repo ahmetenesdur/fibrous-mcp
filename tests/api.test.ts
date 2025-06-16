@@ -271,11 +271,5 @@ describe("Fibrous API Endpoints", () => {
 				})
 			);
 		});
-
-		test("should handle API key authentication", async () => {
-			// Test would need to mock the internal method call
-			// This is a conceptual test structure
-			expect(true).toBe(true);
-		});
 	});
 });

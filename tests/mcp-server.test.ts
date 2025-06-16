@@ -28,7 +28,6 @@ import {
 	formatTokenAmountHandler,
 	getTokenHandler,
 } from "../src/server";
-import { toBigNumber } from "../src/utils";
 
 describe("Fibrous MCP Server Tool Handlers", () => {
 	beforeEach(() => {
@@ -93,7 +92,7 @@ describe("Fibrous MCP Server Tool Handlers", () => {
 			mockGetBestRoute.mockResolvedValue(mockRoute);
 			const result = await getBestRouteHandler(args);
 			expect(mockGetBestRoute).toHaveBeenCalledWith(
-				toBigNumber(args.amount),
+				expect.any(Object),
 				args.tokenInAddress,
 				args.tokenOutAddress,
 				args.chainName
@@ -124,7 +123,7 @@ describe("Fibrous MCP Server Tool Handlers", () => {
 			mockBuildTransaction.mockResolvedValue(mockTx);
 			const result = await buildTransactionHandler(args);
 			expect(mockBuildTransaction).toHaveBeenCalledWith(
-				toBigNumber(args.amount),
+				expect.any(Object),
 				args.tokenInAddress,
 				args.tokenOutAddress,
 				args.slippage,

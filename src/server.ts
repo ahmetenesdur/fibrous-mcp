@@ -53,7 +53,7 @@ try {
 	console.log("Fibrous Router initialized");
 } catch (error) {
 	console.error("Failed to initialize Fibrous Router:", error);
-	process.exit(1);
+	throw error;
 }
 
 export const server = new McpServer({
@@ -336,10 +336,8 @@ server.resource(
 							{
 								chainName: chainNameStr,
 								lastUpdated: new Date().toISOString(),
-								tokenCount: tokensResult ? Object.keys(tokensResult).length : 0,
-								protocolCount: protocolsResult
-									? Object.keys(protocolsResult).length
-									: 0,
+								tokenCount: tokensResult ? tokensResult.size : 0,
+								protocolCount: protocolsResult ? protocolsResult.size : 0,
 							},
 							null,
 							2

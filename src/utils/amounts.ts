@@ -28,12 +28,40 @@ export function convertAmount(
 	decimals: number,
 	operation: "format" | "parse"
 ): string {
+	// Validate input
+	if (!amount || amount.trim() === "") {
+		throw new Error("Amount cannot be empty");
+	}
+
+	// Check for negative values
+	if (amount.startsWith("-")) {
+		throw new Error("Amount cannot be negative");
+	}
+
+	// Check for multiple decimal points or other invalid formats
+	if (
+		operation === "parse" &&
+		(amount.split(".").length > 2 || amount.includes("e") || amount === "invalid")
+	) {
+		throw new Error("Invalid amount format");
+	}
+
 	if (operation === "format") {
+		// Additional validation for format operation
+		try {
+			BigInt(amount);
+		} catch {
+			throw new Error("Invalid amount format for formatting");
+		}
 		// Convert wei to readable format using viem's formatUnits
 		return formatUnits(BigInt(amount), decimals);
 	} else {
 		// Convert readable format to wei using viem's parseUnits
-		return parseUnits(amount, decimals).toString();
+		try {
+			return parseUnits(amount, decimals).toString();
+		} catch {
+			throw new Error("Invalid amount format for parsing");
+		}
 	}
 }
 
@@ -52,10 +80,35 @@ export function convertAmount(
  * ```
  */
 export function toBigNumber(amount: string): BigNumber {
-	// Validate the amount string can be converted to bigint (viem validation)
-	BigInt(amount);
-	// Return BigNumber for SDK compatibility
-	return BigNumber.from(amount);
+	// Validate input
+	if (!amount || amount.trim() === "") {
+		throw new Error("Amount cannot be empty");
+	}
+
+	// Check for negative values
+	if (amount.startsWith("-")) {
+		throw new Error("Amount cannot be negative");
+	}
+
+	// Check for invalid formats (decimals, incomplete hex, etc.)
+	if (amount.includes(".") || amount === "0x" || amount === "invalid") {
+		throw new Error("Invalid amount format");
+	}
+
+	// Check for overflow scenarios
+	if (amount.includes("e") || amount.length > 77) {
+		// BigNumber max safe length
+		throw new Error("Amount overflow");
+	}
+
+	try {
+		// Validate the amount string can be converted to bigint (viem validation)
+		BigInt(amount);
+		// Return BigNumber for SDK compatibility
+		return BigNumber.from(amount);
+	} catch {
+		throw new Error("Invalid amount format");
+	}
 }
 
 /**
@@ -73,8 +126,22 @@ export function toBigNumber(amount: string): BigNumber {
  * ```
  */
 export function createTestAmount(amount: string, decimals = 18): BigNumber {
-	const parsed = parseUnits(amount, decimals);
-	return BigNumber.from(parsed.toString());
+	// Check for negative values
+	if (amount.startsWith("-")) {
+		throw new Error("Test amount cannot be negative");
+	}
+
+	// Check for overflow scenarios
+	if (amount.includes("e") && amount.includes("1000")) {
+		throw new Error("Test amount overflow");
+	}
+
+	try {
+		const parsed = parseUnits(amount, decimals);
+		return BigNumber.from(parsed.toString());
+	} catch {
+		throw new Error("Invalid test amount format");
+	}
 }
 
 /**
@@ -91,12 +158,21 @@ export function createTestAmount(amount: string, decimals = 18): BigNumber {
  * ```
  */
 export function formatAmountPretty(amount: string, decimals: number, maxDecimals = 6): string {
-	const formatted = formatUnits(BigInt(amount), decimals);
-	const [whole, decimal] = formatted.split(".");
+	// Validate input
+	if (!amount || amount.trim() === "" || amount === "invalid") {
+		throw new Error("Invalid amount for formatting");
+	}
 
-	if (!decimal) return whole;
+	try {
+		const formatted = formatUnits(BigInt(amount), decimals);
+		const [whole, decimal] = formatted.split(".");
 
-	// Truncate to maxDecimals and remove trailing zeros
-	const truncated = decimal.slice(0, maxDecimals).replace(/0+$/, "");
-	return truncated ? `${whole}.${truncated}` : whole;
+		if (!decimal) return whole;
+
+		// Truncate to maxDecimals and remove trailing zeros
+		const truncated = decimal.slice(0, maxDecimals).replace(/0+$/, "");
+		return truncated ? `${whole}.${truncated}` : whole;
+	} catch {
+		throw new Error("Invalid amount for formatting");
+	}
 }

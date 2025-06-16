@@ -26,14 +26,19 @@ beforeAll(() => {
 afterAll(() => {
 	// Restore console
 	global.console = originalConsole;
+	// Restore fetch
+	global.fetch = originalFetch;
 });
 
 // Global error handler for unhandled promises
 process.on("unhandledRejection", (reason) => {
 	// During tests, it's better to fail the test case than to log an unhandled rejection
 	// If a promise is expected to reject, it should be handled with .catch() or await expect().rejects
-	fail(`Unhandled Rejection in tests: ${reason}`);
+	throw new Error(`Unhandled Rejection in tests: ${reason}`);
 });
+
+// Store original fetch for restoration
+const originalFetch = global.fetch;
 
 // Global fetch mock setup
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;
