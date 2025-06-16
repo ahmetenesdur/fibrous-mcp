@@ -4,10 +4,8 @@
  */
 
 import { Router as FibrousRouter } from "fibrous-router-sdk";
-import { BigNumber } from "@ethersproject/bignumber";
+import { createTestAmount } from "../src/utils/index";
 
-// Mock fetch globally
-global.fetch = jest.fn();
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 describe("Fibrous Router SDK", () => {
@@ -16,10 +14,6 @@ describe("Fibrous Router SDK", () => {
 	beforeEach(() => {
 		router = new FibrousRouter();
 		mockFetch.mockClear();
-	});
-
-	afterEach(() => {
-		jest.resetAllMocks();
 	});
 
 	describe("Initialization", () => {
@@ -270,8 +264,10 @@ describe("Fibrous Router SDK", () => {
 								poolId: "ETH-USDC",
 								poolAddress: "0x123",
 								poolName: "ETH/USDC Pool",
-								fromTokenAddress: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-								toTokenAddress: "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
+								fromTokenAddress:
+									"0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+								toTokenAddress:
+									"0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8",
 								percent: "100%",
 							},
 						],
@@ -288,7 +284,7 @@ describe("Fibrous Router SDK", () => {
 				json: async () => mockRoute,
 			} as Response);
 
-			const amount = BigNumber.from("1000000000000000000");
+			const amount = createTestAmount("1.0", 18);
 			const tokenIn = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 			const tokenOut = "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8";
 
@@ -311,7 +307,7 @@ describe("Fibrous Router SDK", () => {
 				json: async () => mockRoute,
 			} as Response);
 
-			const amount = BigNumber.from("1000000000000000000");
+			const amount = createTestAmount("1.0", 18);
 			const tokenIn = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 			const tokenOut = "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8";
 
@@ -342,7 +338,7 @@ describe("Fibrous Router SDK", () => {
 				json: async () => failureRoute,
 			} as Response);
 
-			const amount = BigNumber.from("1000000000000000000");
+			const amount = createTestAmount("1.0", 18);
 			const tokenIn = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 			const tokenOut = "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8";
 
@@ -369,7 +365,7 @@ describe("Fibrous Router SDK", () => {
 					json: async () => mockCalldata,
 				} as Response);
 
-			const amount = BigNumber.from("1000000000000000000");
+			const amount = createTestAmount("1.0", 18);
 			const tokenIn = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 			const tokenOut = "0x053c91253bc9682c04929ca02ed00b3e423f6710d2ee7e0d5ebb06f3ecf368a8";
 			const slippage = 1;
@@ -410,7 +406,7 @@ describe("Fibrous Router SDK", () => {
 					json: async () => mockEvmCalldata,
 				} as Response);
 
-			const amount = BigNumber.from("1000000000000000000");
+			const amount = createTestAmount("1.0", 18);
 			const tokenIn = "0x123";
 			const tokenOut = "0x456";
 			const slippage = 1;
@@ -429,7 +425,7 @@ describe("Fibrous Router SDK", () => {
 		});
 
 		test("should throw error for unsupported chain", async () => {
-			const amount = BigNumber.from("1000000000000000000");
+			const amount = createTestAmount("1.0", 18);
 			const tokenIn = "0x123";
 			const tokenOut = "0x456";
 			const slippage = 1;
@@ -463,8 +459,9 @@ describe("Fibrous Router SDK", () => {
 
 	describe("buildApproveStarknet", () => {
 		test("should build approve transaction for starknet", async () => {
-			const amount = BigNumber.from("1000000000000000000");
-			const tokenAddress = "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
+			const amount = createTestAmount("1.0", 18);
+			const tokenAddress =
+				"0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7";
 
 			const approveCall = await router.buildApproveStarknet(amount, tokenAddress);
 
@@ -514,4 +511,4 @@ describe("Fibrous Router SDK", () => {
 			await expect(router.supportedTokens("starknet")).rejects.toThrow("Invalid JSON");
 		});
 	});
-}); 
+});

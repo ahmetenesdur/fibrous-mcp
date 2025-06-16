@@ -30,34 +30,13 @@ afterAll(() => {
 
 // Global error handler for unhandled promises
 process.on("unhandledRejection", (reason) => {
-	console.error("Unhandled Rejection in tests:", reason);
+	// During tests, it's better to fail the test case than to log an unhandled rejection
+	// If a promise is expected to reject, it should be handled with .catch() or await expect().rejects
+	fail(`Unhandled Rejection in tests: ${reason}`);
 });
 
 // Global fetch mock setup
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;
-
-// Mock Response constructor for tests
-global.Response = class MockResponse {
-	ok: boolean;
-	status: number;
-	statusText: string;
-	headers: Headers;
-
-	constructor(body?: BodyInit | null, init?: ResponseInit) {
-		this.ok = (init?.status ?? 200) >= 200 && (init?.status ?? 200) < 300;
-		this.status = init?.status ?? 200;
-		this.statusText = init?.statusText ?? "OK";
-		this.headers = new Headers(init?.headers);
-	}
-
-	async json() {
-		return {};
-	}
-
-	async text() {
-		return "";
-	}
-} as any;
 
 // Helper function to create mock responses
 export const createMockResponse = (data: any, status = 200): Response => {
@@ -81,4 +60,4 @@ export const createMockErrorResponse = (error: string, status = 500): Response =
 		json: async () => ({ error }),
 		text: async () => JSON.stringify({ error }),
 	} as Response;
-}; 
+};

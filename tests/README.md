@@ -4,46 +4,48 @@ Comprehensive test suite for the Fibrous MCP Server, covering API endpoints, SDK
 
 ## Test Results
 
-✅ **All Tests Passing**: 74/74 tests successful  
-🚀 **Test Suites**: 3 passed, 3 total  
-⚡ **Execution Time**: ~1.1 seconds  
-📊 **Mock Coverage**: 100% external API coverage through comprehensive mocking
+✅ **All Tests Passing**: 90/90 tests successful  
+🚀 **Test Suites**: 4 passed, 4 total  
+⚡ **Execution Time**: ~3 seconds  
+📊 **Mock Coverage**: 100% external API and SDK coverage
 
 ## Test Structure
 
 ```
 tests/
-├── api.test.ts          # API endpoint tests (18 tests)
-├── sdk.test.ts          # Fibrous Router SDK tests (27 tests)  
-├── mcp-server.test.ts   # MCP server functionality tests (29 tests)
-├── setup.ts             # Global test setup and utilities
-└── README.md            # This file
+├── api.test.ts             # API endpoint tests
+├── sdk.test.ts             # Fibrous Router SDK tests
+├── mcp-server.test.ts      # MCP server tool handler tests
+├── utils/
+│   ├── amounts.test.ts     # Amount utility tests
+│   ├── responses.test.ts   # Response utility tests
+│   └── validation.test.ts  # Validation utility tests
+├── setup.ts                # Global test setup and utilities
+└── README.md               # This file
 ```
 
 ## Test Categories
 
-### API Tests (`api.test.ts`) - 18 Tests
-- **Health Check Endpoints**: Validates API availability across all chains
-- **Route Calculation**: Tests optimal swap route discovery
-- **Token & Protocol Discovery**: Validates supported assets and DEX protocols
-- **Error Handling**: Network failures, timeouts, rate limiting
-- **Authentication**: API key handling and header validation
+### API Tests (`api.test.ts`)
+- **Health Check Endpoints**: Validates API availability across all chains.
+- **Route Calculation**: Tests optimal swap route discovery.
+- **Token & Protocol Discovery**: Validates supported assets and DEX protocols.
+- **Error Handling**: Network failures, timeouts, rate limiting.
 
-### SDK Tests (`sdk.test.ts`) - 27 Tests
-- **Router Initialization**: Various configuration scenarios
-- **Token Management**: Fetching and caching token data
-- **Route Calculation**: Best route discovery with options
-- **Transaction Building**: Cross-chain transaction generation
-- **Approval Handling**: Token approval workflow
-- **Error Scenarios**: Network failures and edge cases
+### SDK Tests (`sdk.test.ts`)
+- **Router Initialization**: Various configuration scenarios.
+- **Token Management**: Fetching and caching token data.
+- **Route Calculation**: Best route discovery with options.
+- **Transaction Building**: Cross-chain transaction generation.
 
-### MCP Server Tests (`mcp-server.test.ts`) - 29 Tests
-- **Server Initialization**: MCP server and router setup
-- **Tool Registration**: All 6 MCP tools functionality
-- **Resource Management**: Dynamic resource templates
-- **Prompt Generation**: AI prompt template system
-- **Error Handling**: Graceful failure scenarios
-- **Utility Functions**: Amount conversion and validation
+### MCP Server Tests (`mcp-server.test.ts`)
+- **Tool Handlers**: Tests each of the 6 tool handlers for success and error cases.
+- **Mocking**: Ensures the Fibrous Router SDK is correctly mocked.
+
+### Utility Tests (`tests/utils/`)
+- **Amounts**: `convertAmount`, `toBigNumber`, `formatAmountPretty`.
+- **Validation**: Chain, address, slippage, and decimal validation.
+- **Responses**: `createSuccessResponse`, `createErrorResponse`, etc.
 
 ## Running Tests
 

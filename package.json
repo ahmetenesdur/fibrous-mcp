@@ -10,8 +10,8 @@
 		"start": "node build/index.js",
 		"lint": "eslint src",
 		"lint:fix": "eslint src --fix",
-		"format": "prettier --write \"src/**/*.{ts,js,json}\"",
-		"format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+		"format": "prettier --write \"src/**/*.{ts,js,json}\" \"tests/**/*.{ts,js,json}\"",
+		"format:check": "prettier --check \"src/**/*.{ts,js,json}\" \"tests/**/*.{ts,js,json}\"",
 		"format:lint": "pnpm format && pnpm lint:fix",
 		"test": "jest",
 		"test:watch": "jest --watch",
@@ -23,6 +23,7 @@
 		"@ethersproject/bignumber": "^5.8.0",
 		"@modelcontextprotocol/sdk": "^1.12.1",
 		"fibrous-router-sdk": "^0.5.1",
+		"viem": "^2.31.2",
 		"zod": "^3.25.60"
 	},
 	"devDependencies": {
