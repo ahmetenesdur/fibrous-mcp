@@ -1,73 +1,59 @@
-/**
- * Fibrous MCP Server - Startup script
- * This file is responsible for starting the server.
- */
+#!/usr/bin/env node
 
+import "dotenv/config";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { server, SERVER_CONFIG } from "./server.js";
+import { server } from "./server.js";
 
-// =============================================================================
-// SERVER STARTUP
-// =============================================================================
+// --- Configuration ---
 
-let transport: StdioServerTransport | null = null;
+console.error("[INFO] Environment configuration loaded");
 
-async function startServer(): Promise<void> {
+// --- Server Initialization ---
+
+export async function startServer(): Promise<void> {
 	try {
-		console.log(`Starting ${SERVER_CONFIG.name} v${SERVER_CONFIG.version}...`);
-		console.log("📡 Initializing transport...");
-		transport = new StdioServerTransport();
+		console.error("[INFO] Starting Fibrous MCP Server...");
 
-		console.log("🔗 Connecting server...");
+		const transport = new StdioServerTransport();
 		await server.connect(transport);
 
-		console.log(`${SERVER_CONFIG.name} v${SERVER_CONFIG.version} started`);
-		console.log(`Supported chains: ${SERVER_CONFIG.supportedChains.join(", ")}`);
-		console.log("Server ready for DeFi operations");
+		console.error("[SUCCESS] Fibrous MCP Server started successfully");
 	} catch (error) {
-		console.error(`Failed to start server:`, error);
+		console.error("[ERROR] Failed to start Fibrous MCP Server:", error);
 		process.exit(1);
 	}
 }
 
-function setupGracefulShutdown(): void {
-	const shutdown = async (signal: string) => {
-		console.log(`\nReceived ${signal}, shutting down...`);
-		try {
-			if (transport) {
-				await transport.close();
-			}
-		} catch (error) {
-			console.error("Error during cleanup:", error);
-		}
-		process.exit(0);
-	};
+// --- Process Management ---
 
-	process.on("SIGINT", () => shutdown("SIGINT"));
-	process.on("SIGTERM", () => shutdown("SIGTERM"));
-	process.on("uncaughtException", async (error) => {
-		console.error("Uncaught Exception:", error);
-		try {
-			if (transport) {
-				await transport.close();
-			}
-		} catch (cleanupError) {
-			console.error("Error during cleanup:", cleanupError);
-		}
+export async function gracefulShutdown(signal: string): Promise<void> {
+	console.error(`\n[INFO] Received ${signal}, initiating graceful shutdown...`);
+
+	try {
+		console.error("[INFO] Fibrous MCP Server shutdown complete");
+		process.exit(0);
+	} catch (error) {
+		console.error("[ERROR] Error during shutdown:", error);
 		process.exit(1);
-	});
-	process.on("unhandledRejection", async (reason) => {
-		console.error("Unhandled Rejection:", reason);
-		try {
-			if (transport) {
-				await transport.close();
-			}
-		} catch (cleanupError) {
-			console.error("Error during cleanup:", cleanupError);
-		}
-		process.exit(1);
-	});
+	}
 }
 
-setupGracefulShutdown();
-startServer();
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+
+process.on("uncaughtException", (error) => {
+	console.error("[CRITICAL] Uncaught Exception:", error);
+	process.exit(1);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+	console.error("[CRITICAL] Unhandled Promise Rejection at:", promise);
+	process.exit(1);
+});
+
+// --- Start Server ---
+
+startServer().catch((error) => {
+	console.error("[CRITICAL] Fatal error during server startup:", error);
+	process.exit(1);
+});

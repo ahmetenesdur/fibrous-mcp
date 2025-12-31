@@ -1,283 +1,243 @@
-/**
- * Fibrous MCP Server - Model Context Protocol Server
- * Enterprise-grade MCP server integrating Fibrous Finance DeFi aggregation
- */
-
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { Router as FibrousRouter } from "fibrous-router-sdk";
-import type { Token } from "fibrous-router-sdk";
 import {
-	convertAmount,
-	toBigNumber,
-	validateChain,
-	createErrorResponse,
-	createSuccessResponse,
-	createEmptyResponse,
 	SUPPORTED_CHAINS,
-} from "./utils/index";
+	SERVER_CONSTANTS,
+	API_ENDPOINTS,
+	VALIDATION_LIMITS,
+	getValidChains,
+	logConfigStatus,
+	validateChain,
+} from "./utils/index.js";
+import {
+	getSupportedTokensHandler,
+	getSupportedProtocolsHandler,
+	getBestRouteHandler,
+	buildTransactionHandler,
+	formatTokenAmountHandler,
+	getTokenHandler,
+	executeSwapHandler,
+	estimateSwapHandler,
+} from "./tools/handlers.js";
 
-// =============================================================================
-// CONFIGURATION
-// =============================================================================
+// --- Configuration ---
 
 export const SERVER_CONFIG = {
-	name: "fibrous-mcp",
-	version: "1.0.0",
-	description: "Fibrous SDK MCP server for DeFi token swaps",
+	name: SERVER_CONSTANTS.NAME,
+	version: SERVER_CONSTANTS.VERSION,
+	description: SERVER_CONSTANTS.DESCRIPTION,
 	supportedChains: SUPPORTED_CHAINS,
 	apiEndpoints: {
-		api: "https://api.fibrous.finance",
-		graph: "https://graph.fibrous.finance",
+		api: API_ENDPOINTS.FIBROUS_API,
+		graph: API_ENDPOINTS.GRAPH_API,
 	},
-	rateLimit: "200 requests per minute",
+	rateLimit: SERVER_CONSTANTS.RATE_LIMIT,
 } as const;
 
 export const schemas = {
 	chainName: z.enum(SUPPORTED_CHAINS).describe("Supported blockchain network"),
-	tokenAddress: z.string().min(1).describe("Token contract address"),
-	amount: z.string().min(1).describe("Token amount as string (wei format)"),
-	slippage: z.number().min(0.01).max(50).describe("Slippage percentage (0.01-50%)"),
-	decimals: z.number().int().min(0).max(30).describe("Token decimal places"),
+	tokenAddress: z
+		.string()
+		.min(VALIDATION_LIMITS.MIN_STRING_LENGTH)
+		.describe("Token contract address"),
+	amount: z
+		.string()
+		.min(VALIDATION_LIMITS.MIN_STRING_LENGTH)
+		.describe("Token amount as string (wei format)"),
+	slippage: z
+		.number()
+		.min(VALIDATION_LIMITS.MIN_SLIPPAGE)
+		.max(VALIDATION_LIMITS.MAX_SLIPPAGE)
+		.describe("Slippage percentage (0.01-50%)"),
+	decimals: z
+		.number()
+		.int()
+		.min(VALIDATION_LIMITS.MIN_DECIMALS)
+		.max(VALIDATION_LIMITS.MAX_DECIMALS)
+		.describe("Token decimal places"),
 	operation: z.enum(["format", "parse"]).describe("Amount conversion operation"),
 } as const;
 
-// =============================================================================
-// INITIALIZATION
-// =============================================================================
+// --- Initialization ---
 
 export let fibrousRouter: FibrousRouter;
 
-try {
-	fibrousRouter = new FibrousRouter();
-	console.log("Fibrous Router initialized");
-} catch (error) {
-	console.error("Failed to initialize Fibrous Router:", error);
-	throw error;
-}
+(async () => {
+	try {
+		fibrousRouter = new FibrousRouter({ apiVersion: "v2" });
+		await fibrousRouter.refreshSupportedChains();
+		console.error("[INFO] Fibrous Router initialized with V2 API");
+
+		logConfigStatus();
+	} catch (error) {
+		console.error("Failed to initialize Fibrous Router:", error);
+		process.exit(1);
+	}
+})();
 
 export const server = new McpServer({
 	name: SERVER_CONFIG.name,
 	version: SERVER_CONFIG.version,
 });
 
-// =============================================================================
-// TOOL HANDLERS
-// =============================================================================
+// --- Tool Registration ---
+const tools: any[] = [
+	{
+		name: "get-supported-tokens",
+		description: "Get a list of supported tokens for a given chain",
+		inputSchema: z.object({
+			chainName: schemas.chainName,
+		}),
+		handler: getSupportedTokensHandler,
+	},
+	{
+		name: "get-supported-protocols",
+		description: "Get a list of supported protocols for a given chain",
+		inputSchema: z.object({
+			chainName: schemas.chainName,
+		}),
+		handler: getSupportedProtocolsHandler,
+	},
+	{
+		name: "get-best-route",
+		description: "Find the best swap route between two tokens",
+		inputSchema: z.object({
+			amount: schemas.amount,
+			tokenInAddress: schemas.tokenAddress,
+			tokenOutAddress: schemas.tokenAddress,
+			chainName: schemas.chainName,
+			options: z
+				.object({
+					direct: z.boolean().optional(),
+					excludeProtocols: z.array(z.string()).optional(),
+				})
+				.optional(),
+		}),
+		handler: getBestRouteHandler,
+	},
+	{
+		name: "get-best-route-batch",
+		description: "Find the best routes for multiple swaps (Starknet only)",
+		inputSchema: z.object({
+			amounts: z.array(schemas.amount),
+			tokenInAddresses: z.array(schemas.tokenAddress),
+			tokenOutAddresses: z.array(schemas.tokenAddress),
+			chainName: z.literal("starknet"),
+		}),
+		// We'll update imports to include this handler next
+		handler: async (args: any, router: FibrousRouter) => {
+			const { getBestRouteBatchHandler } = await import("./tools/handlers.js");
+			return getBestRouteBatchHandler(args, router);
+		},
+	},
+	{
+		name: "build-transaction",
+		description: "Build the transaction data for a swap",
+		inputSchema: z.object({
+			amount: schemas.amount,
+			tokenInAddress: schemas.tokenAddress,
+			tokenOutAddress: schemas.tokenAddress,
+			slippage: schemas.slippage,
+			receiverAddress: z.string().min(1).describe("Recipient wallet address"),
+			chainName: schemas.chainName,
+			options: z
+				.object({
+					direct: z.boolean().optional(),
+					excludeProtocols: z.array(z.string()).optional(),
+				})
+				.optional(),
+		}),
+		handler: buildTransactionHandler,
+	},
+	{
+		name: "build-batch-transaction",
+		description: "Build transaction data for multiple swaps (Starknet only)",
+		inputSchema: z.object({
+			amounts: z.array(schemas.amount),
+			tokenInAddresses: z.array(schemas.tokenAddress),
+			tokenOutAddresses: z.array(schemas.tokenAddress),
+			slippage: schemas.slippage,
+			receiverAddress: z.string().min(1).describe("Recipient wallet address"),
+			chainName: z.literal("starknet"),
+		}),
+		// We'll update imports to include this handler next
+		handler: async (args: any, router: FibrousRouter) => {
+			const { buildBatchTransactionHandler } = await import("./tools/handlers.js");
+			return buildBatchTransactionHandler(args, router);
+		},
+	},
+	{
+		name: "format-token-amount",
+		description: "Convert token amount between human-readable and wei formats",
+		inputSchema: z.object({
+			amount: schemas.amount,
+			decimals: schemas.decimals,
+			operation: schemas.operation,
+		}),
+		handler: formatTokenAmountHandler,
+	},
+	{
+		name: "get-token",
+		description: "Get token information by address",
+		inputSchema: z.object({
+			address: schemas.tokenAddress,
+			chainName: schemas.chainName,
+		}),
+		handler: getTokenHandler,
+	},
+];
 
-export async function getSupportedTokensHandler({
-	chainName,
-}: {
-	chainName: string;
-}): Promise<any> {
-	try {
-		validateChain(chainName);
-		const tokens = await fibrousRouter.supportedTokens(chainName);
-
-		const tokensObject: Record<string, Token> = {};
-		if (tokens instanceof Map) {
-			tokens.forEach((token, symbol) => {
-				tokensObject[symbol] = token;
-			});
-		} else {
-			Object.assign(tokensObject, tokens);
+// Conditionally add tools that require wallet configuration
+const validChains = getValidChains();
+if (validChains.length > 0) {
+	tools.push(
+		{
+			name: "execute-swap",
+			description: `Execute a token swap (Available for: ${validChains.join(", ")})`,
+			inputSchema: z.object({
+				amount: schemas.amount,
+				tokenInAddress: schemas.tokenAddress,
+				tokenOutAddress: schemas.tokenAddress,
+				slippage: schemas.slippage.optional(),
+				receiverAddress: z
+					.string()
+					.optional()
+					.describe("Address to receive swapped tokens"),
+				chainName: schemas.chainName,
+			}),
+			handler: executeSwapHandler,
+		},
+		{
+			name: "estimate-swap",
+			description: `Estimate gas cost for a token swap (Available for: ${validChains.join(", ")})`,
+			inputSchema: z.object({
+				amount: schemas.amount,
+				tokenInAddress: schemas.tokenAddress,
+				tokenOutAddress: schemas.tokenAddress,
+				slippage: schemas.slippage.optional(),
+				chainName: schemas.chainName,
+			}),
+			handler: estimateSwapHandler,
 		}
-
-		const tokenCount = Object.keys(tokensObject).length;
-		if (tokenCount === 0) {
-			return createEmptyResponse("tokens", chainName);
-		}
-
-		return createSuccessResponse(tokensObject, `Supported tokens for ${chainName}`);
-	} catch (error) {
-		return createErrorResponse(error, "get-supported-tokens", chainName);
-	}
+	);
 }
 
-export async function getSupportedProtocolsHandler({
-	chainName,
-}: {
-	chainName: string;
-}): Promise<any> {
-	try {
-		validateChain(chainName);
-		const protocols = await fibrousRouter.supportedProtocols(chainName);
-		return createSuccessResponse(protocols, `Supported protocols for ${chainName}`);
-	} catch (error) {
-		return createErrorResponse(error, "get-supported-protocols", chainName);
-	}
-}
+// Register all tools
+tools.forEach((tool) => {
+	const { name, description, inputSchema, handler } = tool;
 
-export async function getBestRouteHandler({
-	amount,
-	tokenInAddress,
-	tokenOutAddress,
-	chainName,
-}: {
-	amount: string;
-	tokenInAddress: string;
-	tokenOutAddress: string;
-	chainName: string;
-}): Promise<any> {
-	try {
-		validateChain(chainName);
-		const amountBN = toBigNumber(amount);
-		const route = await fibrousRouter.getBestRoute(
-			amountBN,
-			tokenInAddress,
-			tokenOutAddress,
-			chainName
-		);
-		return createSuccessResponse(route, `Best route for ${chainName} swap`);
-	} catch (error) {
-		return createErrorResponse(error, "get-best-route", chainName);
-	}
-}
+	// Create wrapper function to inject fibrousRouter
+	const wrappedHandler = async (args: any) => {
+		return (handler as any)(args, fibrousRouter);
+	};
 
-export async function buildTransactionHandler({
-	amount,
-	tokenInAddress,
-	tokenOutAddress,
-	slippage,
-	receiverAddress,
-	chainName,
-}: {
-	amount: string;
-	tokenInAddress: string;
-	tokenOutAddress: string;
-	slippage: number;
-	receiverAddress: string;
-	chainName: string;
-}): Promise<any> {
-	try {
-		validateChain(chainName);
-		const amountBN = toBigNumber(amount);
-		const transaction = await fibrousRouter.buildTransaction(
-			amountBN,
-			tokenInAddress,
-			tokenOutAddress,
-			slippage,
-			receiverAddress,
-			chainName
-		);
-		return createSuccessResponse(transaction, `Transaction data for ${chainName} swap`);
-	} catch (error) {
-		return createErrorResponse(error, "build-transaction", chainName);
-	}
-}
+	server.tool(name, { description, input: inputSchema } as any, wrappedHandler);
+});
 
-export async function formatTokenAmountHandler({
-	amount,
-	decimals,
-	operation,
-}: {
-	amount: string;
-	decimals: number;
-	operation: "format" | "parse";
-}): Promise<any> {
-	try {
-		const result = convertAmount(amount, decimals, operation);
-		return {
-			content: [
-				{
-					type: "text",
-					text: `Amount conversion: ${amount} → ${result} (${operation}, ${decimals} decimals)`,
-				},
-			],
-		};
-	} catch (error) {
-		return createErrorResponse(error, "format-token-amount");
-	}
-}
+// Log total number of tools
 
-export async function getTokenHandler({
-	address,
-	chainName,
-}: {
-	address: string;
-	chainName: string;
-}): Promise<any> {
-	try {
-		validateChain(chainName);
-		const token = await fibrousRouter.getToken(address, chainName);
-
-		if (!token) {
-			return {
-				content: [
-					{
-						type: "text",
-						text: `Token not found: ${address} on ${chainName}`,
-					},
-				],
-			};
-		}
-
-		return createSuccessResponse(token, `Token information for ${token.symbol}`);
-	} catch (error) {
-		return createErrorResponse(error, "get-token", chainName);
-	}
-}
-
-// =============================================================================
-// TOOLS REGISTRATION
-// =============================================================================
-
-server.tool("get-supported-tokens", { chainName: schemas.chainName }, getSupportedTokensHandler);
-
-server.tool(
-	"get-supported-protocols",
-	{ chainName: schemas.chainName },
-	getSupportedProtocolsHandler
-);
-
-server.tool(
-	"get-best-route",
-	{
-		amount: schemas.amount,
-		tokenInAddress: schemas.tokenAddress,
-		tokenOutAddress: schemas.tokenAddress,
-		chainName: schemas.chainName,
-	},
-	getBestRouteHandler
-);
-
-server.tool(
-	"build-transaction",
-	{
-		amount: schemas.amount,
-		tokenInAddress: schemas.tokenAddress,
-		tokenOutAddress: schemas.tokenAddress,
-		slippage: schemas.slippage,
-		receiverAddress: z.string().min(1).describe("Recipient wallet address"),
-		chainName: schemas.chainName,
-	},
-	buildTransactionHandler
-);
-
-server.tool(
-	"format-token-amount",
-	{
-		amount: schemas.amount.describe(
-			"Amount string (wei for 'format' operation, readable for 'parse' operation)"
-		),
-		decimals: schemas.decimals,
-		operation: schemas.operation,
-	},
-	formatTokenAmountHandler
-);
-
-server.tool(
-	"get-token",
-	{
-		address: schemas.tokenAddress,
-		chainName: schemas.chainName,
-	},
-	getTokenHandler
-);
-
-// =============================================================================
-// RESOURCES
-// =============================================================================
+// --- Resources ---
 
 server.resource("fibrous-config", "fibrous://config", async (uri) => ({
 	contents: [
@@ -385,9 +345,7 @@ Use "help" prompt for detailed documentation.`,
 	})
 );
 
-// =============================================================================
-// PROMPTS
-// =============================================================================
+// --- Prompts ---
 
 server.prompt(
 	"analyze-swap",
@@ -395,9 +353,19 @@ server.prompt(
 		tokenIn: z.string().describe("Input token"),
 		tokenOut: z.string().describe("Output token"),
 		amount: z.string().describe("Amount to swap"),
-		chainName: schemas.chainName,
-	},
-	({ tokenIn, tokenOut, amount, chainName }) => ({
+		chainName: schemas.chainName as any,
+	} as any,
+	(({
+		tokenIn,
+		tokenOut,
+		amount,
+		chainName,
+	}: {
+		tokenIn: string;
+		tokenOut: string;
+		amount: string;
+		chainName: string;
+	}) => ({
 		messages: [
 			{
 				role: "user",
@@ -417,7 +385,7 @@ Please use Fibrous SDK tools to:
 				},
 			},
 		],
-	})
+	})) as any
 );
 
 server.prompt(
@@ -426,8 +394,16 @@ server.prompt(
 		portfolio: z.string().describe("Current portfolio"),
 		goal: z.string().describe("Investment goal"),
 		riskTolerance: z.string().optional().describe("Risk tolerance"),
-	},
-	({ portfolio, goal, riskTolerance }) => ({
+	} as any,
+	(({
+		portfolio,
+		goal,
+		riskTolerance,
+	}: {
+		portfolio: string;
+		goal: string;
+		riskTolerance?: string;
+	}) => ({
 		messages: [
 			{
 				role: "user",
@@ -443,7 +419,7 @@ Use Fibrous tools to analyze rebalancing opportunities and provide actionable re
 				},
 			},
 		],
-	})
+	})) as any
 );
 
 server.prompt("help", {}, () => ({
@@ -461,6 +437,8 @@ TOOLS:
 • build-transaction - Generate transaction data
 • format-token-amount - Convert amounts
 • get-token - Get token info by address
+• execute-swap - Execute token swap with real transactions
+• estimate-swap - Estimate gas costs for swaps
 
 SUPPORTED CHAINS: ${SERVER_CONFIG.supportedChains.join(", ")}
 
@@ -468,12 +446,25 @@ EXAMPLE USAGE:
 {
 	"name": "get-best-route",
 	"arguments": {
-	"amount": "1000000000000000000",
-	"tokenInAddress": "0x...",
-	"tokenOutAddress": "0x...",
-	"chainName": "base"
+		"amount": "1000000000000000000",
+		"tokenInAddress": "0x...",
+		"tokenOutAddress": "0x...",
+		"chainName": "base"
+	}
 }
+
+{
+	"name": "execute-swap",
+	"arguments": {
+		"amount": "1000000000000000000",
+		"tokenInAddress": "0x...",
+		"tokenOutAddress": "0x...",
+		"slippage": 1,
+		"chainName": "base"
+	}
 }
+
+⚠️  IMPORTANT: execute-swap requires wallet configuration in environment variables!
 
 For detailed help with any specific tool or operation, just ask!`,
 			},
