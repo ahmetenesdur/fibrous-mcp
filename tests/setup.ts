@@ -1,7 +1,3 @@
-/**
- * Global test setup for Fibrous MCP Server tests
- */
-
 // Global test timeout
 jest.setTimeout(10000);
 

@@ -1,8 +1,3 @@
-/**
- * Fibrous API Endpoints Test Suite
- * Professional test suite for testing Fibrous Finance API endpoints
- */
-
 const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
 
 describe("Fibrous API Endpoints", () => {
