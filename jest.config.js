@@ -5,7 +5,10 @@ export default {
 	extensionsToTreatAsEsm: [".ts"],
 
 	// Test files
-	testMatch: ["<rootDir>/tests/**/*.test.ts"],
+	testMatch: [
+		"<rootDir>/tests/**/*.test.ts",
+		"<rootDir>/tests/**/**/*.test.ts",
+	],
 
 	// TypeScript configuration
 	transform: {
@@ -21,6 +24,8 @@ export default {
 	moduleFileExtensions: ["ts", "js", "json"],
 	moduleNameMapper: {
 		"^@/(.*)$": "<rootDir>/src/$1",
+		"^(\\.{1,2}/.*)\\.js$": "$1",
+		"^fibrous-router-sdk$": "<rootDir>/router-sdk/src",
 	},
 
 	// Setup files
