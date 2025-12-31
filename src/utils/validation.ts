@@ -1,7 +1,4 @@
-/**
- * Validation Utilities
- * Professional validation functions for Fibrous MCP server
- */
+import { VALIDATION_LIMITS } from "./constants.js";
 
 /**
  * Supported blockchain networks
@@ -78,8 +75,10 @@ export function isValidAddress(address: string): boolean {
  * ```
  */
 export function isValidStarknetAddress(address: string): boolean {
-	// Starknet addresses can be longer and start with 0x
-	return /^0x[a-fA-F0-9]{1,64}$/.test(address);
+	// Starknet addresses start with 0x and can be 1-64 hex characters
+	// But we need to distinguish from Ethereum addresses (exactly 40 chars)
+	// So we allow 1-39 chars OR 41-64 chars (excluding exactly 40 chars for Ethereum)
+	return /^0x[a-fA-F0-9]{1,39}$/.test(address) || /^0x[a-fA-F0-9]{41,64}$/.test(address);
 }
 
 /**
@@ -120,7 +119,7 @@ export function isValidAddressForChain(address: string, chain: SupportedChain): 
  * ```
  */
 export function isValidSlippage(slippage: number): boolean {
-	return slippage >= 0.01 && slippage <= 50;
+	return slippage >= VALIDATION_LIMITS.MIN_SLIPPAGE && slippage <= VALIDATION_LIMITS.MAX_SLIPPAGE;
 }
 
 /**
@@ -136,5 +135,38 @@ export function isValidSlippage(slippage: number): boolean {
  * ```
  */
 export function isValidDecimals(decimals: number): boolean {
-	return Number.isInteger(decimals) && decimals >= 0 && decimals <= 30;
+	return (
+		Number.isInteger(decimals) &&
+		decimals >= VALIDATION_LIMITS.MIN_DECIMALS &&
+		decimals <= VALIDATION_LIMITS.MAX_DECIMALS
+	);
+}
+
+import { Protocols, type ProtocolId } from "fibrous-router-sdk";
+
+/**
+ * Map string protocol names to ProtocolId enum values
+ *
+ * @param protocols - Array of protocol names to map
+ * @returns Array of mapped ProtocolIds
+ */
+export function mapProtocolIds(protocols: string[]): ProtocolId[] {
+	if (!protocols || protocols.length === 0) return [];
+
+	const mappedProtocols: ProtocolId[] = [];
+	const protocolMap: Record<string, ProtocolId> = {};
+
+	// Create case-insensitive map
+	Object.entries(Protocols).forEach(([key, value]) => {
+		protocolMap[key.toLowerCase()] = value as ProtocolId;
+	});
+
+	for (const p of protocols) {
+		const id = protocolMap[p.toLowerCase()];
+		if (id !== undefined) {
+			mappedProtocols.push(id);
+		}
+	}
+
+	return mappedProtocols;
 }

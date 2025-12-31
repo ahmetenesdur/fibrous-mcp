@@ -1,10 +1,24 @@
-/**
- * Utilities Index
- * Central export point for all utility functions
- */
+// Constants
+export {
+	SERVER_CONSTANTS,
+	API_ENDPOINTS,
+	EXPLORER_URLS,
+	VALIDATION_LIMITS,
+	GAS_FALLBACKS,
+	RESPONSE_LIMITS,
+	DEFAULTS,
+} from "./constants.js";
 
 // Amount conversion utilities
-export { convertAmount, toBigNumber, createTestAmount, formatAmountPretty } from "./amounts";
+export {
+	convertAmount,
+	toBigInt,
+	toBigNumber, // deprecated, for backward compatibility
+	createTestAmount,
+	formatAmountPretty,
+	bigintToString,
+	bigNumberToString, // deprecated, for backward compatibility
+} from "./amounts.js";
 
 // Validation utilities
 export {
@@ -15,9 +29,10 @@ export {
 	isValidAddressForChain,
 	isValidSlippage,
 	isValidDecimals,
+	mapProtocolIds,
 	SUPPORTED_CHAINS,
 	type SupportedChain,
-} from "./validation";
+} from "./validation.js";
 
 // Response utilities
 export {
@@ -30,4 +45,28 @@ export {
 	type McpResponseContent,
 	type McpSuccessResponse,
 	type McpErrorResponse,
-} from "./responses";
+} from "./responses.js";
+
+// Configuration utilities
+export {
+	getWalletConfig,
+	getServerConfig,
+	getChainConfig,
+	validateWalletConfig,
+	validateChainConfig,
+	getValidChains,
+	maskPrivateKey,
+	logConfigStatus,
+	type ChainConfig,
+	type WalletConfig,
+	type ServerConfig,
+} from "./config.js";
+
+// Swap execution utilities
+export {
+	executeSwap,
+	validateSwapParams,
+	estimateSwapGas,
+	type SwapParams,
+	type SwapResult,
+} from "./swap.js";

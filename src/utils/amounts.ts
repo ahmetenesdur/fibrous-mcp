@@ -1,13 +1,8 @@
-/**
- * Amount Conversion Utilities
- * Professional utilities for amount conversion using viem with BigNumber compatibility
- */
-
 import { parseUnits, formatUnits } from "viem";
-import { BigNumber } from "@ethersproject/bignumber";
+import { VALIDATION_LIMITS } from "./constants.js";
 
 /**
- * Convert amount between wei and readable format using viem utilities
+ * Convert amount between wei and readable format using ethers utilities
  *
  * @param amount - The amount to convert
  * @param decimals - Number of decimal places for the token
@@ -17,7 +12,7 @@ import { BigNumber } from "@ethersproject/bignumber";
  * @example
  * ```typescript
  * // Convert wei to readable
- * convertAmount("1000000000000000000", 18, "format") // "1"
+ * convertAmount("1000000000000000000", 18, "format") // "1.0"
  *
  * // Convert readable to wei
  * convertAmount("1.5", 18, "parse") // "1500000000000000000"
@@ -53,10 +48,10 @@ export function convertAmount(
 		} catch {
 			throw new Error("Invalid amount format for formatting");
 		}
-		// Convert wei to readable format using viem's formatUnits
+		// Convert wei to readable format using ethers' formatUnits
 		return formatUnits(BigInt(amount), decimals);
 	} else {
-		// Convert readable format to wei using viem's parseUnits
+		// Convert readable format to wei using ethers' parseUnits
 		try {
 			return parseUnits(amount, decimals).toString();
 		} catch {
@@ -66,20 +61,19 @@ export function convertAmount(
 }
 
 /**
- * Convert string amount to BigNumber for SDK compatibility
- * Uses viem internally for validation but returns BigNumber for external SDKs
+ * Convert string amount to bigint
  *
  * @param amount - Amount string to convert
- * @returns BigNumber instance for SDK compatibility
+ * @returns bigint value
  * @throws Will throw if amount is not a valid number string
  *
  * @example
  * ```typescript
- * const bn = toBigNumber("1000000000000000000")
- * // Returns BigNumber instance that can be used with ethers/other SDKs
+ * const bigintAmount = toBigInt("1000000000000000000")
+ * // Returns 1000000000000000000n
  * ```
  */
-export function toBigNumber(amount: string): BigNumber {
+export function toBigInt(amount: string): bigint {
 	// Validate input
 	if (!amount || amount.trim() === "") {
 		throw new Error("Amount cannot be empty");
@@ -96,36 +90,33 @@ export function toBigNumber(amount: string): BigNumber {
 	}
 
 	// Check for overflow scenarios
-	if (amount.includes("e") || amount.length > 77) {
-		// BigNumber max safe length
+	if (amount.includes("e") || amount.length > VALIDATION_LIMITS.MAX_AMOUNT_LENGTH) {
+		// Safe length check
 		throw new Error("Amount overflow");
 	}
 
 	try {
-		// Validate the amount string can be converted to bigint (viem validation)
-		BigInt(amount);
-		// Return BigNumber for SDK compatibility
-		return BigNumber.from(amount);
+		return BigInt(amount);
 	} catch {
 		throw new Error("Invalid amount format");
 	}
 }
 
 /**
- * Create test amount using viem parseUnits but convert to BigNumber for SDK compatibility
- * Useful for testing scenarios where SDK expects BigNumber
+ * Create test amount using bigint
+ * Returns bigint
  *
  * @param amount - Human readable amount (e.g., "1.5")
  * @param decimals - Token decimals (default: 18)
- * @returns BigNumber instance
+ * @returns bigint value
  *
  * @example
  * ```typescript
  * const testAmount = createTestAmount("1.5", 18)
- * // Returns BigNumber representing 1.5 ETH in wei
+ * // Returns 1500000000000000000n representing 1.5 ETH in wei
  * ```
  */
-export function createTestAmount(amount: string, decimals = 18): BigNumber {
+export function createTestAmount(amount: string, decimals = 18): bigint {
 	// Check for negative values
 	if (amount.startsWith("-")) {
 		throw new Error("Test amount cannot be negative");
@@ -137,15 +128,14 @@ export function createTestAmount(amount: string, decimals = 18): BigNumber {
 	}
 
 	try {
-		const parsed = parseUnits(amount, decimals);
-		return BigNumber.from(parsed.toString());
+		return BigInt(parseUnits(amount, decimals).toString());
 	} catch {
 		throw new Error("Invalid test amount format");
 	}
 }
 
 /**
- * Format amount with proper decimal handling
+ * Format amount with proper decimal handling and rounding
  *
  * @param amount - Amount in smallest unit (wei)
  * @param decimals - Number of decimal places
@@ -165,14 +155,45 @@ export function formatAmountPretty(amount: string, decimals: number, maxDecimals
 
 	try {
 		const formatted = formatUnits(BigInt(amount), decimals);
-		const [whole, decimal] = formatted.split(".");
+		const num = parseFloat(formatted);
+
+		// Use toFixed for proper rounding, then remove trailing zeros
+		const rounded = num.toFixed(maxDecimals);
+		const [whole, decimal] = rounded.split(".");
 
 		if (!decimal) return whole;
 
-		// Truncate to maxDecimals and remove trailing zeros
-		const truncated = decimal.slice(0, maxDecimals).replace(/0+$/, "");
-		return truncated ? `${whole}.${truncated}` : whole;
+		// Remove trailing zeros
+		const trimmed = decimal.replace(/0+$/, "");
+		return trimmed ? `${whole}.${trimmed}` : whole;
 	} catch {
 		throw new Error("Invalid amount for formatting");
 	}
+}
+
+/**
+ * Convert bigint to string for compatibility
+ * @param amount - bigint amount
+ * @returns String representation
+ */
+export function bigintToString(amount: bigint): string {
+	return amount.toString();
+}
+
+/**
+ * Legacy function for backwards compatibility
+ * @deprecated Use toBigInt() instead
+ */
+export function toBigNumber(amount: string): bigint {
+	console.warn("toBigNumber is deprecated, use toBigInt instead");
+	return toBigInt(amount);
+}
+
+/**
+ * Legacy function for backwards compatibility
+ * @deprecated Use bigintToString() instead
+ */
+export function bigNumberToString(amount: bigint): string {
+	console.warn("bigNumberToString is deprecated, use bigintToString instead");
+	return bigintToString(amount);
 }

@@ -1,9 +1,5 @@
-/**
- * Response Utilities
- * Professional response helpers for MCP server communication
- */
-
-import { SUPPORTED_CHAINS } from "./validation";
+import { SUPPORTED_CHAINS } from "./validation.js";
+import { RESPONSE_LIMITS } from "./constants.js";
 
 /**
  * Standard MCP response content structure
@@ -54,19 +50,96 @@ export function createErrorResponse(
 	chainName?: string
 ): McpErrorResponse {
 	const errorMessage = error instanceof Error ? error.message : "Unknown error";
+	const timestamp = new Date().toISOString();
 
 	return {
 		content: [
 			{
 				type: "text",
 				text: `Error in ${context}: ${errorMessage}
-
+		
+Timestamp: ${timestamp}
 Supported chains: ${SUPPORTED_CHAINS.join(", ")}
-${chainName ? `Chain: ${chainName}` : ""}`,
+${chainName ? `Chain: ${chainName}` : ""}
+		
+Tip: Check your parameters and try again. For help, use the "help" prompt.`,
 			},
 		],
 		isError: true,
 	};
+}
+
+/**
+ * Sanitize and truncate large objects to prevent memory issues
+ */
+function sanitizeObject(obj: unknown, maxDepth = 3, currentDepth = 0): unknown {
+	if (currentDepth >= maxDepth) {
+		return "[Max depth reached]";
+	}
+
+	if (obj === null || obj === undefined) {
+		return obj;
+	}
+
+	if (typeof obj === "string") {
+		return obj.length > RESPONSE_LIMITS.MAX_STRING_LENGTH
+			? obj.substring(0, RESPONSE_LIMITS.MAX_STRING_LENGTH) +
+					RESPONSE_LIMITS.TRUNCATION_INDICATOR
+			: obj;
+	}
+
+	if (typeof obj === "number" || typeof obj === "boolean") {
+		return obj;
+	}
+
+	if (Array.isArray(obj)) {
+		if (obj.length > RESPONSE_LIMITS.MAX_ARRAY_LENGTH) {
+			const truncated = obj
+				.slice(0, RESPONSE_LIMITS.MAX_ARRAY_LENGTH)
+				.map((item) => sanitizeObject(item, maxDepth, currentDepth + 1));
+			truncated.push(`[... ${obj.length - RESPONSE_LIMITS.MAX_ARRAY_LENGTH} more items]`);
+			return truncated;
+		}
+		return obj.map((item) => sanitizeObject(item, maxDepth, currentDepth + 1));
+	}
+
+	if (typeof obj === "object") {
+		const sanitized: Record<string, unknown> = {};
+		const entries = Object.entries(obj as Record<string, unknown>);
+
+		for (const [key, value] of entries.slice(0, RESPONSE_LIMITS.MAX_OBJECT_PROPERTIES)) {
+			// Limit object properties
+			sanitized[key] = sanitizeObject(value, maxDepth, currentDepth + 1);
+		}
+
+		if (entries.length > RESPONSE_LIMITS.MAX_OBJECT_PROPERTIES) {
+			sanitized["[truncated]"] =
+				`${entries.length - RESPONSE_LIMITS.MAX_OBJECT_PROPERTIES} more properties`;
+		}
+
+		return sanitized;
+	}
+
+	return String(obj);
+}
+
+/**
+ * Format JSON with size limits
+ */
+function formatJsonSafely(data: unknown): string {
+	try {
+		const sanitized = sanitizeObject(data);
+		const jsonString = JSON.stringify(sanitized, null, 2);
+
+		if (jsonString.length > RESPONSE_LIMITS.MAX_SIZE) {
+			const truncated = jsonString.substring(0, RESPONSE_LIMITS.MAX_SIZE - 100);
+			return truncated + "\n... (Response truncated due to size limit)";
+		}
+
+		return jsonString;
+	} catch (error) {
+		return `[Error formatting response: ${error instanceof Error ? error.message : "Unknown error"}]`;
+	}
 }
 
 /**
@@ -85,11 +158,19 @@ ${chainName ? `Chain: ${chainName}` : ""}`,
  * ```
  */
 export function createSuccessResponse(data: unknown, context: string): McpSuccessResponse {
+	const timestamp = new Date().toISOString();
+	const formattedData = formatJsonSafely(data);
+
 	return {
 		content: [
 			{
 				type: "text",
-				text: `${context}:\n\n${JSON.stringify(data, null, 2)}`,
+				text: `${context}
+		
+Timestamp: ${timestamp}
+		
+Data:
+${formattedData}`,
 			},
 		],
 	};
@@ -107,11 +188,15 @@ export function createSuccessResponse(data: unknown, context: string): McpSucces
  * ```
  */
 export function createInfoResponse(message: string): McpSuccessResponse {
+	const timestamp = new Date().toISOString();
+
 	return {
 		content: [
 			{
 				type: "text",
-				text: message,
+				text: `${message}
+		
+Timestamp: ${timestamp}`,
 			},
 		],
 	};
@@ -130,7 +215,14 @@ export function createInfoResponse(message: string): McpSuccessResponse {
  * ```
  */
 export function createEmptyResponse(resourceType: string, chainName: string): McpSuccessResponse {
-	return createInfoResponse(`No ${resourceType} found for ${chainName}. Check API connectivity.`);
+	return createInfoResponse(
+		`No ${resourceType} found for ${chainName}. This could indicate:
+• Network connectivity issues
+• API service temporarily unavailable
+• Chain configuration problems
+
+Try again in a moment or check your network connection.`
+	);
 }
 
 /**
